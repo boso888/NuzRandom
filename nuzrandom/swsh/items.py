@@ -28,7 +28,12 @@ POCKET_OFF = 0x11
 POCKET_KEY = 8
 EMPTY_HASH = 0xCBF29CE484222645
 
-POKE_BALL, POTION, MAX_REPEL, RARE_CANDY = 4, 17, 43, 50
+POKE_BALL, POTION, MAX_REPEL, RARE_CANDY = 4, 17, 77, 50
+
+# Regalos que nunca se cambian aunque se aleatoricen los regalos: Poké Balls,
+# curaciones básicas y repelentes. Sin ellos el principio de un nuzlocke no se puede jugar.
+BALLS = set(range(1, 17)) | set(range(492, 501)) | {576, 851}
+BASIC_GIFTS = BALLS | set(range(17, 30)) | {76, 77, 78, 79}
 
 EVO_ITEMS = [80, 81, 82, 83, 84, 85, 107, 108, 109, 110, 221, 226, 227, 233, 235, 252, 321, 322, 323, 324, 325,
              326, 327, 537, 646, 647, 849, 1109, 1110, 1111, 1112, 1113, 1114, 1115, 1116, 1117, 1253, 1254,
@@ -227,7 +232,9 @@ def do_shops(store: FileStore, items: Items, cfg: S.Settings, rng, log: Log):
     appended = []
     for field_addr, vec, vals in invs:
         n_tm = sum(1 for v in vals if v in tmset or v in trset)
-        if POKE_BALL in vals and POTION in vals:
+        # Tienda básica (dependiente de la izquierda, o el único que hay): vende Poké Balls o
+        # Pociones. La primera tienda del juego aún no vende Poké Balls, solo Pociones y curas.
+        if POKE_BALL in vals or POTION in vals:
             stats["main"] += 1
             new = [e for e in extras if e not in vals] + vals
             if len(new) != len(vals):
@@ -427,7 +434,7 @@ def do_gift_items(store: FileStore, items: Items, cfg: S.Settings, rng, log: Log
     by_file: dict[str, list] = {}
     for amx, cell, item, label in facts:
         by_file.setdefault(amx, []).append((cell, item, label))
-    changed = protected = 0
+    changed = protected = kept = 0
     for amx, entries in by_file.items():
         rel = f"{AMX_DIR}/{amx}"
         if not store.exists(rel):
@@ -446,6 +453,9 @@ def do_gift_items(store: FileStore, items: Items, cfg: S.Settings, rng, log: Log
             if items.is_key(item):
                 protected += 1
                 continue
+            if item in BASIC_GIFTS:
+                kept += 1
+                continue
             new = pick_item(rng, general, evo, cfg.items_evo_percent, extra)
             edits.append((bounds[cell], new, item))
         if not edits:
@@ -456,4 +466,5 @@ def do_gift_items(store: FileStore, items: Items, cfg: S.Settings, rng, log: Log
             changed += 1
         struct.pack_into("<I", d, 0, len(d))
         store.write(rel, d)
-    log.add("Objetos", f"{changed} objetos regalados aleatorizados ({protected} objetos clave protegidos).")
+    log.add("Objetos", f"{changed} objetos regalados aleatorizados ({protected} objetos clave protegidos, "
+                       f"{kept} Poké Balls, curaciones y repelentes sin cambios).")

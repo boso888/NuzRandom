@@ -86,7 +86,7 @@ def shop_fb():
         v = u32vec(b, items)
         return table(b, [("off", v)])
     singles = []
-    for items in ([4, 17, 18, 26], [213, 214, 215, 216, 217], [328, 329, 330, 331]):
+    for items in ([4, 17, 18, 26], [213, 214, 215, 216, 217], [328, 329, 330, 331], [17, 18, 19]):
         i = inv(items)
         singles.append(table(b, [("u64", 7), ("off", i)]))
     tiers = [inv([4, 17]), inv([4, 17, 2]), inv([4, 17, 2, 3])]
@@ -219,6 +219,7 @@ def main(root: Path):
     w("bin/archive/field/resident/placement.gfpak", gfpak({f"zone{z}.bin": placement_fb(z) for z in range(3)}))
     w("bin/script/amx/main_event_0180.amx", amx({5119: (4 << 32) | 0xBC}))
     w("bin/script/amx/main_event_0300.amx", amx({5759: (1074 << 32) | 0xBC}))
+    w("bin/script/amx/main_event_0340.amx", amx({6060: (367 << 32) | 0xBC}, ncells=6200))
     for t in range(1, 41):
         td = bytearray(0x18)
         td[3] = 3

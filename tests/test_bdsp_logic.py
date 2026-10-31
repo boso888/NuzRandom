@@ -84,7 +84,7 @@ def main():
     items = {r["no"]: r["price"] for r in pb.trees["ItemTable"]["Item"]}
     assert items[17] == 250 and items[50] == 1 and items[92] == 1000
     fs = [r["ItemNo"] for r in mb.trees["ShopTable"]["FS"]]
-    assert 43 in fs and 50 in fs
+    assert 77 in fs and 50 in fs
     fixed = mb.trees["ShopTable"]["FixedShop"]
     assert [r["ItemNo"] for r in fixed[:5]] != [200, 201, 202, 203, 204]
     assert all(328 <= r["ItemNo"] <= 427 for r in fixed[5:])

@@ -25,6 +25,7 @@ MODE_LABELS = {
     "mezclar": "Mezclar", "redistribuir": "Redistribuir (mismo total)",
     "todos": "Todos aprenden todo", "rapida": "Rápida", "media": "Media", "lenta": "Lenta",
     "tope": "Nivel máximo", "porcentaje": "Porcentaje del nivel original",
+    "cada_combate": "Otro distinto en cada combate",
 }
 
 TAB_INTRO = {
@@ -62,6 +63,19 @@ opt("Salvajes", "Especies", "Permitir legendarios", "wild_legendaries", "check",
 opt("Salvajes", "Especies", "Incluir los visibles en el mapa (Espada/Escudo)", "wild_overworld", "check", None,
     "Los Pokémon que caminan por el mapa. Solo se usan especies que el juego ya sabe mostrar fuera, para evitar "
     "cuelgues.")
+opt("Salvajes", "Combate oculto (Espada/Escudo 1.3.2)", "Lo que ves en el mapa no es lo que combates", "hidden_battle",
+    "check", None,
+    "Al tocar un Pokémon visible, el combate es contra otra especie al azar: verlo no te dice qué vas a "
+    "capturar. Usa el módulo del juego de PokeFeur Randomizer SWSH (hay que descargarlo aparte) y solo "
+    "funciona con la versión 1.3.2. Respeta los legendarios y los filtros de estadísticas de esta pestaña.")
+opt("Salvajes", "Combate oculto (Espada/Escudo 1.3.2)", "Pokémon del combate", "hidden_battle_mode", "combo",
+    ["cada_combate", "zona", "global"],
+    "Otro distinto en cada combate: nunca sabes qué saldrá.\n"
+    "Igual en toda la zona: cada especie visible de una zona se convierte siempre en la misma.\n"
+    "Igual en todo el juego: el cambio es el mismo en todas las zonas.")
+opt("Salvajes", "Combate oculto (Espada/Escudo 1.3.2)", "Carpeta de PokeFeur", "exlaunch_dir", "dir", None,
+    "La carpeta de PokeFeur Randomizer SWSH (github.com/JonatanUHC/PokeFeurRandomSWSH). "
+    "Si la dejas vacía, se busca una carpeta PokeFeurRandomSWSH junto a la de NuzRandom.")
 opt("Salvajes", "Filtros", "Total de estadísticas mínimo (0 = sin límite)", "wild_min_bst", "spin", (0, 720),
     "Evita Pokémon demasiado débiles. Ejemplo: 300 elimina Magikarp, Caterpie…")
 opt("Salvajes", "Filtros", "Total de estadísticas máximo (0 = sin límite)", "wild_max_bst", "spin", (0, 720),
@@ -196,7 +210,8 @@ opt("Objetos y tiendas", "Objetos del mundo", "Objetos del suelo aleatorios", "f
 opt("Objetos y tiendas", "Objetos del mundo", "Objetos ocultos aleatorios", "hidden_items_random", "check", None,
     "Los brillos del suelo que solo ves al acercarte.")
 opt("Objetos y tiendas", "Objetos del mundo", "Objetos regalados aleatorios", "gift_items_random", "check", None,
-    "Lo que te dan los NPC y líderes. Bici, Recomendación, Brazalete Dinamax… nunca se tocan.")
+    "Lo que te dan los NPC y líderes. Bici, Recomendación, Brazalete Dinamax… nunca se tocan, y las Poké Balls, "
+    "curaciones y repelentes regalados tampoco.")
 opt("Objetos y tiendas", "Objetos del mundo", "Pueden salir MT/DT", "items_include_tms", "check", None, "")
 opt("Objetos y tiendas", "Objetos del mundo", "Objetos de evolución (%)", "items_evo_percent", "spin", (0, 100), "")
 opt("Objetos y tiendas", "Objetos del mundo", "Objetos que nunca deben salir", "items_exclude", "entry", None,
@@ -440,6 +455,11 @@ class App(tk.Tk):
             elif kind == "spin":
                 v = tk.IntVar()
                 w = ttk.Spinbox(frame, from_=opts[0], to=opts[1], textvariable=v, width=8)
+            elif kind == "dir":
+                v = tk.StringVar()
+                w = ttk.Frame(frame)
+                ttk.Entry(w, textvariable=v, width=36).pack(side="left")
+                ttk.Button(w, text="Elegir…", command=lambda var=v: self._pick_dir(var)).pack(side="left", padx=4)
             else:
                 v = tk.StringVar()
                 w = ttk.Entry(frame, textvariable=v, width=44)

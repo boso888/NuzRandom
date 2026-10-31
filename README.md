@@ -50,6 +50,18 @@ Preajustes: **Nuzlocke clásico** (recomendado), **Nuzlocke difícil**, **Caos t
 | Objetos y tiendas | % de precio, conservar objetos para vender, Repelente Máximo, Caramelos Raros y su precio, otros objetos para la tienda, tiendas secundarias y de MT, % de objetos de evolución, objetos del suelo, ocultos y regalados, MT en el mundo, lista de objetos prohibidos |
 | General | semilla reproducible, generaciones permitidas, registro de cambios, guardar y cargar ajustes, diagnóstico |
 
+## Combate oculto (Espada/Escudo 1.3.2)
+
+Con esta opción, el Pokémon que ves por el mapa no es el que combates: al tocarlo, el combate es contra otra especie al azar. Así no puedes elegir qué capturar.
+
+Los archivos del romfs no pueden hacerlo, porque el modelo y el combate salen del mismo dato. Lo hace el módulo del juego (ExLaunch) de [PokeFeur Randomizer SWSH](https://github.com/JonatanUHC/PokeFeurRandomSWSH), que NuzRandom **no incluye**:
+
+1. Descarga PokeFeur Randomizer SWSH y deja su carpeta como `PokeFeurRandomSWSH`, junto a la de NuzRandom, o elígela en la pestaña **Salvajes**.
+2. Activa **Lo que ves en el mapa no es lo que combates** y elige el modo: otro distinto en cada combate, igual en toda la zona o igual en todo el juego.
+3. **Randomizar**. NuzRandom copia el módulo a la carpeta `exefs` del mod y su configuración a `sdcard/config/swsh-mods-exl/config.toml` del emulador. Si ya había una de otra herramienta, la guarda como `config.toml.antes_de_nuzrandom`.
+
+Solo funciona con la actualización 1.3.2. El Pokémon del combate respeta los legendarios y los filtros de estadísticas de la pestaña Salvajes.
+
 ## Diamante Brillante / Perla Reluciente
 
 Funcionan: salvajes, entrenadores y jefes de 6, datos de Pokémon, movimientos, MT, evoluciones, precios, Repelente Máximo y Caramelos Raros en la tienda, y tiendas secundarias y de MT.
@@ -67,4 +79,4 @@ Los jefes se detectan por el tipo de entrenador. Revisa el registro y usa *Añad
 
 ## Créditos y licencia
 
-GPLv3. Las estructuras de Espada/Escudo (jefes, tiendas, precios, objetos del suelo) se basan en [PokeFeur Randomizer SWSH](https://github.com/JonatanUHC/PokeFeurRandomSWSH) (GPLv3) y pkNX. Las posiciones de los objetos regalados proceden de KM-Editor (GPLv3) y se verifican contra tu romfs antes de escribir. Nombres de especies en español: paquete `pokemon` de Sindre Sorhus (MIT).
+GPLv3. Las estructuras de Espada/Escudo (jefes, tiendas, precios, objetos del suelo) se basan en [PokeFeur Randomizer SWSH](https://github.com/JonatanUHC/PokeFeurRandomSWSH) (GPLv3) y pkNX. Las posiciones de los objetos regalados proceden de KM-Editor (GPLv3) y se verifican contra tu romfs antes de escribir. El combate oculto usa el módulo ExLaunch de PokeFeur Randomizer SWSH (GPLv3), basado en [swsh-mods-exl](https://github.com/lincoln-lm/swsh-mods-exl) de Lincoln-LM. Nombres de especies en español: paquete `pokemon` de Sindre Sorhus (MIT).

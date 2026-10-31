@@ -58,6 +58,27 @@ def _safe_clear(folder: Path) -> None:
         shutil.rmtree(folder)
 
 
+def _hidden_battle_config(cfg, module, pool, seed, emulator, out_dir: Path, log: Log, emit) -> None:
+    """Escribe (o retira) la configuración del módulo de combate oculto."""
+    from .swsh import runtime as RT
+    sdmc = RT.sdmc_dir(emulator)
+    if not module:
+        if sdmc and RT.remove_config(sdmc):
+            emit("✔ Combate oculto desactivado: se quitó su configuración del emulador.")
+        return
+    text = RT.config_text(cfg.hidden_battle_mode, pool, seed)
+    manual = RT.install_config(out_dir / "sdcard", text)
+    log.add("Combate oculto", f"Módulo: {module[0]}")
+    log.add("Combate oculto", f"Modo: {cfg.hidden_battle_mode}; {len(pool)} especies posibles en el combate.")
+    if sdmc:
+        path = RT.install_config(sdmc, text)
+        emit(f"✔ Combate oculto activo. Configuración en {path}")
+        log.add("Combate oculto", f"Configuración instalada en {path}")
+    else:
+        emit(f"✔ Combate oculto: copia {manual} a sdcard/config/swsh-mods-exl/ de tu emulador.")
+        log.add("Combate oculto", f"Configuración para copiar a mano: {manual}")
+
+
 def run(romfs: str, game: str, cfg: Settings, out_dir: str, emulator: str | None, mod_name: str = "NuzRandom",
         emit=print) -> dict:
     romfs_path = normalize_romfs(Path(romfs))
@@ -68,6 +89,11 @@ def run(romfs: str, game: str, cfg: Settings, out_dir: str, emulator: str | None
     if found != family:
         raise RuntimeError(f"La carpeta parece de otro juego ({'Espada/Escudo' if found == 'swsh' else 'DPBP'}).")
 
+    module = None
+    if family == "swsh" and cfg.hidden_battle:
+        from .swsh import runtime as RT
+        module = RT.find_module(cfg.exlaunch_dir, title_id, emulator)   # falla antes de randomizar nada
+
     rng, seed = make_rng(cfg.seed)
     log = Log(emit)
     store = FileStore(romfs_path)
@@ -77,7 +103,9 @@ def run(romfs: str, game: str, cfg: Settings, out_dir: str, emulator: str | None
         problems = validate(store)
         if problems:
             raise RuntimeError("\n".join(problems))
-        SwShRandomizer(store, cfg, rng, log).run()
+        rnd = SwShRandomizer(store, cfg, rng, log)
+        rnd.run()
+        battle_pool = rnd.battle_pool()
     else:
         from .bdsp.randomizer import BdspRandomizer
         BdspRandomizer(store, cfg, rng, log).run()
@@ -92,7 +120,12 @@ def run(romfs: str, game: str, cfg: Settings, out_dir: str, emulator: str | None
         _safe_clear(t)
         n = store.flush(t / "romfs")
         (t / MARKER).write_text(f"Mod generado por NuzRandom. Semilla: {seed}\n", encoding="utf-8")
+        if module:
+            RT.copy_module(*module, t)
+            n += 2
         emit(f"✔ {n} archivos escritos en {t}")
+    if family == "swsh":
+        _hidden_battle_config(cfg, module, battle_pool if module else [], seed, emulator, Path(out_dir), log, emit)
     log_path = None
     if cfg.spoiler_log:
         log_path = Path(out_dir) / f"spoiler_{mod_name}_{seed}.txt"

@@ -100,10 +100,11 @@ def main(tmp: Path):
     assert price(it1, IT.RARE_CANDY) == 1
     shop = bytearray((mod / IT.SHOP).read_bytes())
     invs = IT.shop_inventories(FB(shop))
-    main_invs = [v for _a, _p, v in invs if 4 in v and 17 in v]
-    assert len(main_invs) == 4 and all(v[:3] == [IT.MAX_REPEL, IT.RARE_CANDY, 1] and 2 in v for v in main_invs), main_invs
+    main_invs = [v for _a, _p, v in invs if 4 in v or 17 in v]
+    assert len(main_invs) == 5 and all(v[:3] == [IT.MAX_REPEL, IT.RARE_CANDY, 1] and 2 in v for v in main_invs), main_invs
     tiers = [v for v in main_invs if len(v) > 6]
-    assert main_invs[-1] == [43, 50, 1, 4, 17, 2, 3]
+    assert main_invs[-1] == [IT.MAX_REPEL, IT.RARE_CANDY, 1, 4, 17, 2, 3]
+    assert [IT.MAX_REPEL, IT.RARE_CANDY, 1, 2, 17, 18, 19] in main_invs, "la primera tienda (sin Poké Balls) se tocó"
     sec = [v for _a, _p, v in invs if v and v[0] not in (IT.MAX_REPEL,) and len(v) == 5][0]
     assert sec != [213, 214, 215, 216, 217]
     tm = [v for _a, _p, v in invs if len(v) == 4 and IT.MAX_REPEL not in v][0]
@@ -117,18 +118,52 @@ def main(tmp: Path):
     assert fnv1a64("item_1100").to_bytes(8, "little") in z1, "se movió un objeto clave del suelo"
     assert fnv1a64("").to_bytes(8, "little") in z1
 
-    # --- regalos NPC
-    a0 = (romfs / "bin/script/amx/main_event_0180.amx").read_bytes()
-    a1 = (mod / "bin/script/amx/main_event_0180.amx").read_bytes()
-    cells, _b, _c = IT._amx_decode(a1)
-    assert len(cells) == 6000 and cells[5119] & 0xFFFFFFFF == 0xBC and cells[5119] >> 32 != 4
-    assert IT._amx_decode(a0)[0][:5119] == cells[:5119] and IT._amx_decode(a0)[0][5120:] == cells[5120:]
-    assert not (mod / "bin/script/amx/main_event_0300.amx").exists(), "se tocó un objeto clave regalado"
+    # --- regalos NPC: por defecto no se tocan
+    assert not (mod / "bin/script/amx/main_event_0180.amx").exists(), "se tocó un regalo con la opción apagada"
 
     # --- reproducible
     engine.run(str(romfs), "Espada", cfg, str(tmp / "salida2"), None, emit=lambda m: None)
     for rel in ("bin/archive/field/resident/data_table.gfpak", IT.SHOP, IT.PLACEMENT, IT.ITEM):
         assert (mod / rel).read_bytes() == (tmp / "salida2/NuzRandom/romfs" / rel).read_bytes(), rel
+    # --- regalos NPC activados: las Poké Balls y objetos clave se respetan
+    cfg.gift_items_random = True
+    engine.run(str(romfs), "Espada", cfg, str(tmp / "salida3"), None, emit=lambda m: None)
+    mod3 = tmp / "salida3/NuzRandom/romfs"
+    assert not (mod3 / "bin/script/amx/main_event_0180.amx").exists(), "se cambiaron Poké Balls regaladas"
+    assert not (mod3 / "bin/script/amx/main_event_0300.amx").exists(), "se tocó un objeto clave regalado"
+    a0 = (romfs / "bin/script/amx/main_event_0340.amx").read_bytes()
+    cells, _b, _c = IT._amx_decode((mod3 / "bin/script/amx/main_event_0340.amx").read_bytes())
+    assert cells[6060] & 0xFFFFFFFF == 0xBC and cells[6060] >> 32 != 367
+    assert IT._amx_decode(a0)[0][:6060] == cells[:6060] and IT._amx_decode(a0)[0][6061:] == cells[6061:]
+
+    # --- combate oculto: copia el módulo al exefs y escribe config.toml
+    import tomllib
+    from nuzrandom.swsh import runtime as RT
+    cfg.hidden_battle = True
+    cfg.exlaunch_dir = str(tmp / "no_existe")
+    try:
+        engine.run(str(romfs), "Espada", cfg, str(tmp / "salida4"), None, emit=lambda m: None)
+        raise AssertionError("debía avisar de que falta el módulo")
+    except RuntimeError as e:
+        assert "PokeFeur" in str(e)
+    assert not (tmp / "salida4").exists(), "no debía generar nada sin el módulo"
+    pf = tmp / "PokeFeur" / "assets" / "exlaunch" / "0100ABF008968000"
+    pf.mkdir(parents=True)
+    (pf / "subsdk9_stable").write_bytes(b"SUBSDK")
+    (pf / "main.npdm_stable").write_bytes(b"NPDM")
+    cfg.exlaunch_dir = str(tmp / "PokeFeur")
+    cfg.hidden_battle_mode = "zona"
+    engine.run(str(romfs), "Espada", cfg, str(tmp / "salida4"), None, emit=lambda m: None)
+    mod4 = tmp / "salida4" / "NuzRandom"
+    assert (mod4 / "exefs" / "subsdk9").read_bytes() == b"SUBSDK"
+    assert (mod4 / "exefs" / "main.npdm").read_bytes() == b"NPDM"
+    conf = tomllib.loads((tmp / "salida4" / "sdcard" / RT.CONFIG_REL).read_text(encoding="utf-8"))
+    rz = conf["randomizer"]
+    assert rz["active"] and rz["visible_mode"] == "vanilla" and rz["battle_mode"] == "zone"
+    assert rz["battle_pool"] and not set(rz["battle_pool"]) & LEGENDARIES
+    assert conf["exp_share"]["enabled"] and not conf["exp_level_cap"]["active"] and not conf["early_bike"]["active"]
+    assert 0 <= rz["seed"] < 2**63
+
     print("log:", res["log"])
     print("TODO OK")
 

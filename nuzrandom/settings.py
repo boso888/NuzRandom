@@ -31,6 +31,10 @@ class Settings:
     wild_min_bst: int = 0
     wild_max_bst: int = 0               # 0 = sin límite
     wild_held_items_random: bool = False
+    # Combate oculto (Espada/Escudo 1.3.2, módulo ExLaunch de PokeFeur): el Pokémon visible no es el del combate
+    hidden_battle: bool = False
+    hidden_battle_mode: str = "cada_combate"   # cada_combate | zona | global
+    exlaunch_dir: str = ""                     # carpeta de PokeFeur Randomizer SWSH (vacío = buscar junto a la app)
 
     # --- Encuentros fijos ---
     static_mode: str = RANDOM
@@ -118,7 +122,7 @@ class Settings:
     shops_evo_percent: int = 30
     field_items_random: bool = True
     hidden_items_random: bool = True
-    gift_items_random: bool = True
+    gift_items_random: bool = False       # lo que dan los NPC se queda como en el juego original
     items_include_tms: bool = True
     items_evo_percent: int = 15
     items_exclude: str = ""

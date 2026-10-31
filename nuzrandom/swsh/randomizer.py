@@ -469,6 +469,11 @@ class SwShRandomizer:
         if c.wild_level_percent:
             self.log.add("Salvajes", f"Niveles salvajes {c.wild_level_percent:+d} %.")
 
+    def battle_pool(self) -> list[int]:
+        """Especies posibles en el combate oculto: mismos filtros que los salvajes."""
+        c = self.cfg
+        return self.picker.pool(c.wild_legendaries, extra=self.bst_filter(c.wild_min_bst, c.wild_max_bst))
+
     def _iter_slots(self, fb: FB):
         r = fb.root()
         if not fb.valid_table(r):
