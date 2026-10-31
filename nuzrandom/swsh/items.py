@@ -124,6 +124,32 @@ class Items:
             self.st.write(ITEM, self.data)
 
 
+class SameKind:
+    """Una MT se cambia por otra MT y un DT por otro DT (las Poké Balls amarillas del suelo
+    contienen MT: el color no cambia, así que el contenido tiene que seguir siendo una MT).
+    Se reparten sin repetir hasta agotar la lista, porque en Espada/Escudo las MT no se gastan."""
+
+    def __init__(self, rng, items: "Items", exclude: set[int], allowed=None):
+        ok = (lambda i: True) if allowed is None else allowed
+        self.rng = rng
+        self.decks = {kind: [i for i in items.usable(ids) if i not in exclude and ok(i)]
+                      for kind, ids in (("tm", TM_ITEMS), ("tr", TR_ITEMS))}
+        self.left = {"tm": [], "tr": []}
+        self.tmset, self.trset = set(TM_ITEMS), set(TR_ITEMS)
+
+    def kind(self, iid: int) -> str | None:
+        return "tm" if iid in self.tmset else "tr" if iid in self.trset else None
+
+    def draw(self, iid: int) -> int | None:
+        k = self.kind(iid)
+        if k is None or not self.decks[k]:
+            return None
+        if not self.left[k]:
+            self.left[k] = self.decks[k][:]
+            self.rng.shuffle(self.left[k])
+        return self.left[k].pop()
+
+
 def pick_item(rng, general: list[int], evo: list[int], evo_pct: int, extra: list[int] | None = None) -> int:
     if evo and rng.random() * 100 < evo_pct:
         return rng.choice(evo)
@@ -323,8 +349,9 @@ def do_field_items(store: FileStore, items: Items, cfg: S.Settings, rng, log: Lo
     general = [i for i in items.general_pool(exclude) if i in by_id]
     evo = [i for i in items.evo_pool(exclude) if i in by_id]
     extra = [i for i in items.usable(TM_ITEMS + TR_ITEMS) if i in by_id and i not in exclude] if cfg.items_include_tms else []
+    same = SameKind(rng, items, exclude, allowed=lambda i: i in by_id)
     pack = Gfpak(store.read(PLACEMENT))
-    ground = hidden = protected = 0
+    ground = hidden = protected = machines = 0
     for idx in range(len(pack.entries)):
         try:
             d = pack.get_index(idx)
@@ -360,7 +387,11 @@ def do_field_items(store: FileStore, items: Items, cfg: S.Settings, rng, log: Lo
                     if items.is_key(by_hash[h]):
                         protected += 1
                         continue
-                    new = pick_item(rng, general, evo, cfg.items_evo_percent, extra)
+                    new = same.draw(by_hash[h])
+                    if new is not None:
+                        machines += 1
+                    else:
+                        new = pick_item(rng, general, evo, cfg.items_evo_percent, extra)
                     struct.pack_into("<Q", d, a, by_id[new])
                     touched = True
                     if kind == "g":
@@ -374,7 +405,7 @@ def do_field_items(store: FileStore, items: Items, cfg: S.Settings, rng, log: Lo
     if ground or hidden:
         store.write(PLACEMENT, pack.build())
     log.add("Objetos", f"Objetos del suelo aleatorios: {ground} visibles, {hidden} ocultos "
-                       f"({protected} objetos clave protegidos).")
+                       f"({protected} objetos clave protegidos; {machines} MT/DT cambiadas por otra MT/DT).")
 
 
 # ------------------------------------------------------------ regalos NPC ---
@@ -431,6 +462,7 @@ def do_gift_items(store: FileStore, items: Items, cfg: S.Settings, rng, log: Log
     general = items.general_pool(exclude)
     evo = items.evo_pool(exclude)
     extra = [i for i in items.usable(TM_ITEMS + TR_ITEMS) if i not in exclude] if cfg.items_include_tms else []
+    same = SameKind(rng, items, exclude)
     by_file: dict[str, list] = {}
     for amx, cell, item, label in facts:
         by_file.setdefault(amx, []).append((cell, item, label))
@@ -456,7 +488,9 @@ def do_gift_items(store: FileStore, items: Items, cfg: S.Settings, rng, log: Log
             if item in BASIC_GIFTS:
                 kept += 1
                 continue
-            new = pick_item(rng, general, evo, cfg.items_evo_percent, extra)
+            new = same.draw(item)
+            if new is None:
+                new = pick_item(rng, general, evo, cfg.items_evo_percent, extra)
             edits.append((bounds[cell], new, item))
         if not edits:
             continue

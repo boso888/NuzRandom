@@ -117,6 +117,15 @@ def main(tmp: Path):
     assert z0 != z1
     assert fnv1a64("item_1100").to_bytes(8, "little") in z1, "se movió un objeto clave del suelo"
     assert fnv1a64("").to_bytes(8, "little") in z1
+    by_hash = {fnv1a64(f"item_{i:04d}"): i for i in range(1, 1609)}
+    zfb = FB(bytearray(z1))
+    ground = []
+    for zone in zfb.tables(zfb.root(), 0):
+        for holder in zfb.tables(zone, 6):
+            it = IT._nested(zfb, holder, 0)
+            ground += [by_hash.get(struct.unpack_from("<Q", z1, a)[0]) for a in IT._u64_vector(zfb, it, 6)]
+    assert ground[4] in IT.TM_ITEMS, f"la Poké Ball amarilla (MT) no tiene una MT: {ground}"
+    assert ground[5] in IT.TR_ITEMS, f"el DT del suelo no es un DT: {ground}"
 
     # --- regalos NPC: por defecto no se tocan
     assert not (mod / "bin/script/amx/main_event_0180.amx").exists(), "se tocó un regalo con la opción apagada"

@@ -1,4 +1,4 @@
-# NuzRandom 0.2
+# NuzRandom 0.3
 
 Randomizer de escritorio para Windows pensado para **nuzlockes** en:
 

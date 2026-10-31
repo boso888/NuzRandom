@@ -100,7 +100,7 @@ def shop_fb():
 def placement_fb(z):
     b = flatbuffers.Builder(0)
     holders = []
-    for k, iid in enumerate([20 + z, 1100, 30, None]):
+    for k, iid in enumerate([20 + z, 1100, 30, None, 340, 1150]):
         h = fnv1a64("") if iid is None else fnv1a64(f"item_{iid:04d}")
         hv = u64vec(b, [h])
         qv = u32vec(b, [1])

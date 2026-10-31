@@ -251,6 +251,52 @@ El registro de cambios (spoiler) se guarda en la carpeta de salida: no lo abras 
 saber qué te espera."""
 
 
+NEWS = """Novedades de la versión 0.3 (Espada/Escudo)
+
+1.  La tienda principal ya no se aleatoriza
+    La tienda del dependiente de la izquierda, o la del único que hay (como la de la primera ciudad),
+    se queda como en el juego original: Poké Balls, curaciones y repelentes. Solo se le añaden el
+    Repelente Máximo y los Caramelos Raros si los tienes activados.
+    La tienda del dependiente de la derecha y las de MT/DT siguen siendo aleatorias.
+
+2.  El Repelente Máximo de la tienda ya es el de verdad
+    Antes, por un error, la tienda añadía Zumo de Baya en su lugar.
+
+3.  Los objetos que te regalan ya no son aleatorios
+    Lo que te dan los personajes (por ejemplo, las Poké Balls del principio) llega como en el juego
+    original. Si activas "Objetos regalados aleatorios" (pestaña Objetos y tiendas), las Poké Balls,
+    curaciones y repelentes regalados se siguen respetando.
+
+4.  Las Poké Balls amarillas siempre dan una MT
+    Las Poké Balls amarillas del suelo contienen MT. Ahora dan una MT al azar, nunca otro objeto,
+    y no se repiten entre ellas. Los DT del suelo dan un DT al azar.
+    Si además quieres que las Poké Balls rojas no den MT, desmarca "Pueden salir MT/DT".
+
+5.  Combate oculto: lo que ves en el mapa no es lo que combates
+    Al tocar un Pokémon que camina por el mapa, el combate es contra otra especie al azar, así que
+    verlo no te dice qué vas a capturar. Se activa en la pestaña Salvajes.
+    • Necesita la versión 1.3.2 del juego.
+    • Usa el módulo de PokeFeur Randomizer SWSH. Deja su carpeta, PokeFeurRandomSWSH, junto a la de
+      NuzRandom y la app la encontrará sola ("Carpeta de PokeFeur" puede quedarse vacía).
+    • Si el juego se cuelga al arrancar, desactívalo y vuelve a pulsar Randomizar.
+
+6.  Habilidades distintas en cada evolución
+    Con Habilidades en "Aleatorio" (pestaña Pokémon) y "Coherencia en la línea evolutiva"
+    desmarcada, cada fase tiene sus propias habilidades: un Horsea con Bromista tendrá otra
+    habilidad al evolucionar a Seadra, y otra más como Kingdra.
+    El Pokémon conserva el hueco de habilidad (1, 2 u oculta), no la habilidad.
+
+Configuración recomendada para un nuzlocke
+    General ............ Preajuste "Nuzlocke clásico" → Aplicar preajuste. Instalar en Ryujinx.
+    Salvajes ........... Coherencia "Igual en toda la zona".
+                         "Lo que ves en el mapa no es lo que combates" marcado,
+                         Pokémon del combate "Otro distinto en cada combate".
+    Pokémon ............ Habilidades "Aleatorio" y "Coherencia en la línea evolutiva" desmarcada,
+                         si quieres habilidades nuevas en cada evolución.
+    Objetos y tiendas .. "Objetos regalados aleatorios" desmarcado.
+    Después: cierra Ryujinx, pulsa Randomizar, activa el mod y empieza una partida nueva."""
+
+
 class Tooltip:
     def __init__(self, widget, text):
         self.widget, self.text, self.tip, self.job = widget, text, None, None
@@ -340,8 +386,13 @@ class App(tk.Tk):
         self.nb.add(guide, text="📖 Guía")
         ttk.Label(guide.inner, text=GUIDE, justify="left", font=("Segoe UI", 10)).pack(anchor="w")
 
+        news = Scrollable(self.nb)
+        self.nb.add(news, text="✨ Novedades")
+        ttk.Label(news.inner, text=NEWS, justify="left", font=("Segoe UI", 10)).pack(anchor="w")
+
         gen = Scrollable(self.nb)
         self.nb.add(gen, text="General")
+        self.general_tab = gen
         self._build_general(gen.inner)
 
         tabs: dict[str, tuple] = {}
@@ -599,7 +650,7 @@ class App(tk.Tk):
     def start(self):
         if not self.romfs.get():
             messagebox.showwarning("NuzRandom", "Elige primero la carpeta romfs de tu juego (pestaña General).")
-            self.nb.select(1)
+            self.nb.select(self.general_tab)
             return
         self._save_last()
         cfg = self.collect()
