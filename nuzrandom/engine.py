@@ -59,23 +59,28 @@ def _safe_clear(folder: Path) -> None:
 
 
 def _hidden_battle_config(cfg, module, pool, seed, emulator, out_dir: Path, log: Log, emit) -> None:
-    """Escribe (o retira) la configuración del módulo de combate oculto."""
+    """Escribe (o retira) la configuración del módulo (combate oculto y captura sin límite)."""
     from .swsh import runtime as RT
     sdmc = RT.sdmc_dir(emulator)
     if not module:
         if sdmc and RT.remove_config(sdmc):
             emit("✔ Combate oculto desactivado: se quitó su configuración del emulador.")
         return
-    text = RT.config_text(cfg.hidden_battle_mode, pool, seed)
+    text = RT.config_text(cfg.hidden_battle_mode, pool, seed, hidden=cfg.hidden_battle, uncap=cfg.catch_any_level)
     manual = RT.install_config(out_dir / "sdcard", text)
     log.add("Combate oculto", f"Módulo: {module[0]}")
-    log.add("Combate oculto", f"Modo: {cfg.hidden_battle_mode}; {len(pool)} especies posibles en el combate.")
+    if cfg.hidden_battle:
+        log.add("Combate oculto", f"Modo: {cfg.hidden_battle_mode}; {len(pool)} especies posibles en el combate.")
+    if cfg.catch_any_level:
+        log.add("Combate oculto", "Captura sin límite de nivel: las medallas no bloquean las Poké Balls.")
+    what = " y ".join(n for n, on in (("Combate oculto", cfg.hidden_battle),
+                                      ("Captura sin límite de nivel", cfg.catch_any_level)) if on)
     if sdmc:
         path = RT.install_config(sdmc, text)
-        emit(f"✔ Combate oculto activo. Configuración en {path}")
+        emit(f"✔ Activado: {what}. Configuración en {path}")
         log.add("Combate oculto", f"Configuración instalada en {path}")
     else:
-        emit(f"✔ Combate oculto: copia {manual} a sdcard/config/swsh-mods-exl/ de tu emulador.")
+        emit(f"✔ {what}: copia {manual} a sdcard/config/swsh-mods-exl/ de tu emulador.")
         log.add("Combate oculto", f"Configuración para copiar a mano: {manual}")
 
 
@@ -90,7 +95,7 @@ def run(romfs: str, game: str, cfg: Settings, out_dir: str, emulator: str | None
         raise RuntimeError(f"La carpeta parece de otro juego ({'Espada/Escudo' if found == 'swsh' else 'DPBP'}).")
 
     module = None
-    if family == "swsh" and cfg.hidden_battle:
+    if family == "swsh" and (cfg.hidden_battle or cfg.catch_any_level):
         from .swsh import runtime as RT
         module = RT.find_module(cfg.exlaunch_dir, title_id, emulator)   # falla antes de randomizar nada
 
@@ -125,7 +130,8 @@ def run(romfs: str, game: str, cfg: Settings, out_dir: str, emulator: str | None
             n += 2
         emit(f"✔ {n} archivos escritos en {t}")
     if family == "swsh":
-        _hidden_battle_config(cfg, module, battle_pool if module else [], seed, emulator, Path(out_dir), log, emit)
+        pool = battle_pool if module and cfg.hidden_battle else []
+        _hidden_battle_config(cfg, module, pool, seed, emulator, Path(out_dir), log, emit)
     log_path = None
     if cfg.spoiler_log:
         log_path = Path(out_dir) / f"spoiler_{mod_name}_{seed}.txt"

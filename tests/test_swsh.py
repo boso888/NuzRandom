@@ -172,6 +172,20 @@ def main(tmp: Path):
     assert rz["battle_pool"] and not set(rz["battle_pool"]) & LEGENDARIES
     assert conf["exp_share"]["enabled"] and not conf["exp_level_cap"]["active"] and not conf["early_bike"]["active"]
     assert 0 <= rz["seed"] < 2**63
+    assert not conf["uncap_level"]["active"], "el límite de captura no debía quitarse por defecto"
+
+    # --- captura sin límite de nivel: con y sin combate oculto
+    cfg.catch_any_level = True
+    engine.run(str(romfs), "Espada", cfg, str(tmp / "salida5"), None, emit=lambda m: None)
+    conf = tomllib.loads((tmp / "salida5" / "sdcard" / RT.CONFIG_REL).read_text(encoding="utf-8"))
+    assert conf["uncap_level"] == {"active": True, "fully": True}
+    assert conf["randomizer"]["active"] and conf["randomizer"]["battle_pool"]
+    cfg.hidden_battle = False
+    engine.run(str(romfs), "Espada", cfg, str(tmp / "salida6"), None, emit=lambda m: None)
+    assert (tmp / "salida6" / "NuzRandom" / "exefs" / "subsdk9").read_bytes() == b"SUBSDK"
+    conf = tomllib.loads((tmp / "salida6" / "sdcard" / RT.CONFIG_REL).read_text(encoding="utf-8"))
+    assert conf["uncap_level"]["active"] and not conf["randomizer"]["active"]
+    assert conf["randomizer"]["battle_pool"] == []
 
     print("log:", res["log"])
     print("TODO OK")

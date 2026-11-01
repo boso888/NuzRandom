@@ -1,4 +1,4 @@
-# NuzRandom 0.3
+# NuzRandom 0.3.1
 
 Randomizer de escritorio para Windows pensado para **nuzlockes** en:
 
@@ -40,7 +40,7 @@ Preajustes: **Nuzlocke clásico** (recomendado), **Nuzlocke difícil**, **Caos t
 
 | Pestaña | Opciones |
 |---|---|
-| Salvajes | modo, coherencia (hueco / zona / todo el juego / una especie por zona), legendarios, visibles en el mapa, total de estadísticas mínimo y máximo, niveles ± %, objetos equipados |
+| Salvajes | modo, coherencia (hueco / zona / todo el juego / una especie por zona), legendarios, visibles en el mapa, combate oculto, capturar salvajes de cualquier nivel, total de estadísticas mínimo y máximo, niveles ± %, objetos equipados |
 | Starters y regalos | aleatorios / fuerza similar / elegidos por nombre, solo básicos, solo líneas de 3 fases, sin tipos repetidos, triángulo Planta-Fuego-Agua, legendarios; regalos, intercambios y encuentros fijos |
 | Entrenadores | especies (aleatorio / similar / temático por tipo), legendarios, sin repetidos, evolución forzada desde un nivel, niveles ± %, movimientos según nivel, IA máxima, IV perfectos, naturalezas |
 | Jefes | equipos de 6, primer combate contra el rival, modo propio, legendarios, total de estadísticas mínimo, evolución forzada, niveles extra, IA, IV, objetos de combate, añadir o quitar jefes por ID |
@@ -61,6 +61,51 @@ Los archivos del romfs no pueden hacerlo, porque el modelo y el combate salen de
 3. **Randomizar**. NuzRandom copia el módulo a la carpeta `exefs` del mod y su configuración a `sdcard/config/swsh-mods-exl/config.toml` del emulador. Si ya había una de otra herramienta, la guarda como `config.toml.antes_de_nuzrandom`.
 
 Solo funciona con la actualización 1.3.2. El Pokémon del combate respeta los legendarios y los filtros de estadísticas de la pestaña Salvajes.
+
+## Capturar salvajes de cualquier nivel (Espada/Escudo 1.3.2)
+
+Espada y Escudo **no dejan capturar Pokémon salvajes de más nivel del que permiten tus medallas**. Al tirar la Poké Ball, el juego dice que contra ese rival no sirven las Poké Balls.
+
+| Medallas | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 |
+|---|---|---|---|---|---|---|---|---|---|
+| Nivel máximo para capturar | 20 | 25 | 30 | 35 | 40 | 45 | 50 | 55 | sin límite |
+
+Con los niveles de salvajes subidos (*Niveles salvajes ± %*), pasa a menudo, sobre todo en el Área Silvestre. Por ejemplo, con 3 medallas no puedes capturar un Lucario de nivel 36.
+
+La opción **Capturar salvajes de cualquier nivel** (pestaña **Salvajes**) quita ese bloqueo. Usa el mismo módulo de PokeFeur que el combate oculto (ver arriba), pero funciona aunque el combate oculto esté apagado. Efecto secundario: en el Área Silvestre pueden aparecer Pokémon de nivel más alto.
+
+### Arreglarlo en una partida ya empezada (sin volver a randomizar)
+
+Volver a pulsar *Randomizar* cambia la semilla, así que no lo hagas a mitad de un nuzlocke. Basta con tocar la configuración del módulo. Cierra el juego antes de empezar.
+
+**Si usas el combate oculto**, el módulo ya está instalado:
+
+1. Abre el archivo de configuración del módulo:
+   - Ryujinx: `%APPDATA%\Ryujinx\sdcard\config\swsh-mods-exl\config.toml`
+   - Yuzu y derivados: `%APPDATA%\yuzu\sdmc\config\swsh-mods-exl\config.toml`
+2. Busca la sección `[uncap_level]` y déjala así:
+   ```toml
+   [uncap_level]
+   active = true
+   fully = true
+   ```
+3. Guarda y abre el juego. No cambia nada más de tu partida.
+
+**Si no usas el combate oculto**, primero hay que añadir el módulo al mod:
+
+1. Descarga [PokeFeur Randomizer SWSH](https://github.com/JonatanUHC/PokeFeurRandomSWSH) y abre `assets\exlaunch\0100ABF008968000` (Espada) o `assets\exlaunch\01008DB008C2C000` (Escudo).
+2. Copia `subsdk9_ryujinx` y `main.npdm_ryujinx` (en Yuzu, las versiones `_stable`) a la carpeta `exefs` de tu mod (créala si no existe) y quítales la terminación: deben llamarse `subsdk9` y `main.npdm`.
+   - Ryujinx: `%APPDATA%\Ryujinx\mods\contents\<ID del juego>\NuzRandom\exefs\`
+   - Yuzu: `%APPDATA%\yuzu\load\<ID del juego>\NuzRandom\exefs\`
+3. Crea el `config.toml` en la ruta del paso 1 del caso anterior con solo esto:
+   ```toml
+   [uncap_level]
+   active = true
+   fully = true
+   ```
+4. Abre el juego. Solo funciona con la actualización 1.3.2.
+
+Los cambios en `config.toml` se pierden si vuelves a pulsar *Randomizar*. Para tu próximo nuzlocke, marca la opción en la app.
 
 ## Diamante Brillante / Perla Reluciente
 

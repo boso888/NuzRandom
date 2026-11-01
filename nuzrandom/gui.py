@@ -75,7 +75,15 @@ opt("Salvajes", "Combate oculto (Espada/Escudo 1.3.2)", "Pokémon del combate", 
     "Igual en todo el juego: el cambio es el mismo en todas las zonas.")
 opt("Salvajes", "Combate oculto (Espada/Escudo 1.3.2)", "Carpeta de PokeFeur", "exlaunch_dir", "dir", None,
     "La carpeta de PokeFeur Randomizer SWSH (github.com/JonatanUHC/PokeFeurRandomSWSH). "
-    "Si la dejas vacía, se busca una carpeta PokeFeurRandomSWSH junto a la de NuzRandom.")
+    "Si la dejas vacía, se busca una carpeta PokeFeurRandomSWSH junto a la de NuzRandom. "
+    "También la usa «Capturar salvajes de cualquier nivel».")
+opt("Salvajes", "Combate oculto (Espada/Escudo 1.3.2)", "Capturar salvajes de cualquier nivel", "catch_any_level",
+    "check", None,
+    "El juego no deja capturar salvajes de más nivel del que permiten tus medallas (con 3 medallas, hasta "
+    "el 35) y dice que las Poké Balls no sirven. Con los niveles de salvajes subidos pasa a menudo, sobre "
+    "todo en el Área Silvestre. Esta opción quita ese bloqueo.\n"
+    "Usa el mismo módulo de PokeFeur que el combate oculto, pero funciona aunque el combate oculto esté "
+    "apagado. Efecto secundario: en el Área Silvestre pueden salir Pokémon de nivel más alto.")
 opt("Salvajes", "Filtros", "Total de estadísticas mínimo (0 = sin límite)", "wild_min_bst", "spin", (0, 720),
     "Evita Pokémon demasiado débiles. Ejemplo: 300 elimina Magikarp, Caterpie…")
 opt("Salvajes", "Filtros", "Total de estadísticas máximo (0 = sin límite)", "wild_max_bst", "spin", (0, 720),
@@ -251,7 +259,18 @@ El registro de cambios (spoiler) se guarda en la carpeta de salida: no lo abras 
 saber qué te espera."""
 
 
-NEWS = """Novedades de la versión 0.3 (Espada/Escudo)
+NEWS = """Novedades de la versión 0.3.1 (Espada/Escudo)
+
+Capturar salvajes de cualquier nivel
+    El juego no deja capturar salvajes de más nivel del que permiten tus medallas (con 3 medallas,
+    hasta el 35) y dice que las Poké Balls no sirven. Con los niveles de salvajes subidos pasa a
+    menudo, sobre todo en el Área Silvestre.
+    • Nueva opción en la pestaña Salvajes: "Capturar salvajes de cualquier nivel".
+    • Usa el módulo de PokeFeur, igual que el combate oculto, pero no hace falta activar el combate oculto.
+    • ¿Ya tienes una partida empezada? No vuelvas a randomizar: el README explica cómo
+      activarlo editando config.toml (sección "Arreglarlo en una partida ya empezada").
+
+Novedades de la versión 0.3 (Espada/Escudo)
 
 1.  La tienda principal ya no se aleatoriza
     La tienda del dependiente de la izquierda, o la del único que hay (como la de la primera ciudad),
@@ -291,6 +310,7 @@ Configuración recomendada para un nuzlocke
     Salvajes ........... Coherencia "Igual en toda la zona".
                          "Lo que ves en el mapa no es lo que combates" marcado,
                          Pokémon del combate "Otro distinto en cada combate".
+                         "Capturar salvajes de cualquier nivel" marcado.
     Pokémon ............ Habilidades "Aleatorio" y "Coherencia en la línea evolutiva" desmarcada,
                          si quieres habilidades nuevas en cada evolución.
     Objetos y tiendas .. "Objetos regalados aleatorios" desmarcado.

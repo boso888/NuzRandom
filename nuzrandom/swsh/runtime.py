@@ -1,4 +1,6 @@
-"""Combate oculto en Espada/Escudo: el Pokémon que ves en el mapa no es el que combates.
+"""Módulo del juego para Espada/Escudo: combate oculto y captura sin límite de nivel.
+
+Combate oculto: el Pokémon que ves en el mapa no es el que combates.
 
 Los archivos del romfs no pueden separar el modelo del mapa del Pokémon del combate:
 los dos salen del mismo hueco de la tabla. Esto lo hace un módulo ExLaunch que se
@@ -8,6 +10,9 @@ El módulo es el de PokeFeur Randomizer SWSH (GPLv3), basado en swsh-mods-exl de
 Lincoln-LM. NuzRandom no lo incluye: lo copia de la carpeta de PokeFeur que tenga
 el usuario. Lee su configuración de sdcard/config/swsh-mods-exl/config.toml.
 Solo funciona con la versión 1.3.2 del juego.
+
+Sin límite de captura: el juego bloquea las Poké Balls contra salvajes de más nivel
+del que permiten tus medallas. La sección [uncap_level] del mismo módulo lo quita.
 """
 from __future__ import annotations
 
@@ -49,9 +54,10 @@ def find_module(folder: str, title_id: str, emulator: str | None) -> tuple[Path,
                     return sub, npdm
     where = folder.strip() or ", ".join(str(b) for b in bases[:2])
     raise RuntimeError(
-        "El combate oculto necesita el módulo de PokeFeur Randomizer SWSH y no lo encuentro en: " + where + ".\n"
+        "El combate oculto y la captura sin límite de nivel necesitan el módulo de PokeFeur Randomizer SWSH "
+        "y no lo encuentro en: " + where + ".\n"
         "Descarga https://github.com/JonatanUHC/PokeFeurRandomSWSH y elige su carpeta en la pestaña Salvajes "
-        "(«Carpeta de PokeFeur»), o desactiva el combate oculto.")
+        "(«Carpeta de PokeFeur»), o desactiva esas dos opciones.")
 
 
 def sdmc_dir(emulator: str | None) -> Path | None:
@@ -68,8 +74,8 @@ def seed_u64(seed: str) -> int:
     return int.from_bytes(hashlib.sha256(("combate:" + seed).encode("utf-8")).digest()[:8], "little") & (2**63 - 1)
 
 
-def config_text(mode: str, battle_pool: list[int], seed: str) -> str:
-    """config.toml con solo el combate oculto activo; el resto del módulo apagado."""
+def config_text(mode: str, battle_pool: list[int], seed: str, hidden: bool = True, uncap: bool = False) -> str:
+    """config.toml con solo lo que pide NuzRandom (combate oculto, sin límite de captura); el resto apagado."""
     pool = ", ".join(str(s) for s in battle_pool)
     off = ["overworld_shiny", "underworld", "camera_tweaks", "uncap_level", "freecam", "glimwood_overworld",
            "synchro_mode", "extended_following", "fishing_tweaks", "dex_animations", "exp_level_cap",
@@ -77,9 +83,13 @@ def config_text(mode: str, battle_pool: list[int], seed: str) -> str:
     lines = [MANAGED, "# Generado por NuzRandom para el módulo ExLaunch de PokeFeur (swsh-mods-exl).",
              "# Se reescribe cada vez que pulsas Randomizar.", ""]
     for sec in off:
-        lines += [f"[{sec}]", "active = false", ""]
+        if sec == "uncap_level" and uncap:
+            # PokeFeur siempre escribe fully = true junto a active.
+            lines += [f"[{sec}]", "active = true", "fully = true", ""]
+        else:
+            lines += [f"[{sec}]", "active = false", ""]
     lines += ["[exp_share]", "enabled = true", "",
-              "[randomizer]", "active = true",
+              "[randomizer]", f"active = {'true' if hidden else 'false'}",
               '# Lo que ves en el mapa sale de las tablas del mod; lo que combates lo elige el módulo.',
               'visible_mode = "vanilla"', f'battle_mode = "{MODES.get(mode, "random")}"',
               "visible_pool = []", f"battle_pool = [{pool}]", "reset_discoveries = false",

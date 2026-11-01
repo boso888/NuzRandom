@@ -35,6 +35,8 @@ class Settings:
     hidden_battle: bool = False
     hidden_battle_mode: str = "cada_combate"   # cada_combate | zona | global
     exlaunch_dir: str = ""                     # carpeta de PokeFeur Randomizer SWSH (vacío = buscar junto a la app)
+    # Quita el límite de nivel de captura por medallas (mismo módulo de PokeFeur)
+    catch_any_level: bool = False
 
     # --- Encuentros fijos ---
     static_mode: str = RANDOM
